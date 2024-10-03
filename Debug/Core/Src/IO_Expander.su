@@ -1,0 +1,5 @@
+../Core/Src/IO_Expander.c:21:6:Expander_Init	40	static
+../Core/Src/IO_Expander.c:60:13:Expander_Write_Single_Bit	32	static
+../Core/Src/IO_Expander.c:109:10:Expander_Read_Single_Bit	40	static
+../Core/Src/IO_Expander.c:138:9:Expander_Read_Byte	40	static
+../Core/Src/IO_Expander.c:164:13:Expander_Check_Device	16	static
