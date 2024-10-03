@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "IO_Expander.h"
+#include "DAC_MCP4726.h"
 
 /* USER CODE END Includes */
 
@@ -51,6 +52,7 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 
 Expander_Handle_t MyExpander;
+DAC_Handle_t MyDAC;
 
 
 /* USER CODE END PV */
@@ -110,14 +112,37 @@ int main(void)
 
 
 //-------------------- IO Expander Initialization ----------------------------------//
-	MyExpander.ExpanderAddress = 0x40;			//0b1000000					need to be 0x20, my mistake
+	MyExpander.ExpanderAddress = 0x40;			//0b1000000
 	MyExpander.ConfigReg = 0xF0;				//0b11110000
 	MyExpander.PolarityPortReg = 0xF0;			//0b11110000
 	Expander_Init(&MyExpander);
 
+	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
+	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
+	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
+	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_RESET);
 //----------------------------------------------------------------------------------//
 
 
+//-------------------- DAC Initialization ----------------------------------//
+
+	MyDAC.DACAddress = 0x63;
+	MyDAC.Command = WRITE_VOLATILE_MEMORY << 5;
+	MyDAC.Command += VREF_BUFFERED << 3;
+	MyDAC.Command += NO_POWERED_DOWN << 1;
+	MyDAC.Command += GAIN_1 << 0;
+	MyDAC.DACValue = 0x0080;    // 0x80 - 1.5V
+
+
+
+	if (HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10) == HAL_OK)
+	{
+		Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_SET);
+	}
+	else
+	{
+		Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_SET);
+	}
 
 
 
@@ -128,7 +153,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+/*
 	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
 	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
 	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
@@ -152,7 +177,7 @@ int main(void)
 	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
 	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_SET);
 	HAL_Delay(500);
-
+*/
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
