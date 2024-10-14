@@ -53,8 +53,8 @@ typedef struct
 /*
  * Gain Selection bit
  */
-#define GAIN_1									0
-#define GAIN_2									1		// Not applicable when VDD is used as VRL
+#define DAC_GAIN_1									0
+#define DAC_GAIN_2									1		// Not applicable when VDD is used as VRL
 
 
 /*

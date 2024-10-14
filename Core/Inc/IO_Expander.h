@@ -70,7 +70,7 @@ typedef enum
 #define LED_BLUE								GPIO_PIN_NO_0
 #define LED_RED									GPIO_PIN_NO_1
 #define LED_WHITE								GPIO_PIN_NO_2
-#define LED_YELLOW								GPIO_PIN_NO_3
+#define LED_AMBER								GPIO_PIN_NO_3
 //#define 										GPIO_PIN_NO_4
 #define BUTTON_STARTSTOP						GPIO_PIN_NO_5
 #define BUTTON_INCREASE							GPIO_PIN_NO_6

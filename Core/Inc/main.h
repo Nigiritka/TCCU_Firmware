@@ -63,18 +63,14 @@ void Error_Handler(void);
 #define FAN_2_EN_GPIO_Port GPIOF
 #define IOEXPANDER_INT_L_Pin GPIO_PIN_0
 #define IOEXPANDER_INT_L_GPIO_Port GPIOA
+#define IOEXPANDER_INT_L_EXTI_IRQn EXTI0_1_IRQn
 #define FAN_3_EN_Pin GPIO_PIN_1
 #define FAN_3_EN_GPIO_Port GPIOA
-#define ADC_CS_L_Pin GPIO_PIN_4
-#define ADC_CS_L_GPIO_Port GPIOA
-#define ADS_SCK_Pin GPIO_PIN_5
-#define ADS_SCK_GPIO_Port GPIOA
-#define ADS_MISO_Pin GPIO_PIN_6
-#define ADS_MISO_GPIO_Port GPIOA
-#define ADS_MOSI_Pin GPIO_PIN_7
-#define ADS_MOSI_GPIO_Port GPIOA
-#define ADS_IRQ_Pin GPIO_PIN_1
-#define ADS_IRQ_GPIO_Port GPIOB
+#define ADC_nCS_Pin GPIO_PIN_4
+#define ADC_nCS_GPIO_Port GPIOA
+#define ADC_IRQ_Pin GPIO_PIN_1
+#define ADC_IRQ_GPIO_Port GPIOB
+#define ADC_IRQ_EXTI_IRQn EXTI0_1_IRQn
 
 /* USER CODE BEGIN Private defines */
 

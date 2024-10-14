@@ -2,4 +2,4 @@
 ../Core/Src/IO_Expander.c:60:13:Expander_Write_Single_Bit	3
 ../Core/Src/IO_Expander.c:109:10:Expander_Read_Single_Bit	1
 ../Core/Src/IO_Expander.c:138:9:Expander_Read_Byte	1
-../Core/Src/IO_Expander.c:164:13:Expander_Check_Device	2
+../Core/Src/IO_Expander.c:164:13:Expander_Check_Device	1

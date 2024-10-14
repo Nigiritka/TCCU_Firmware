@@ -24,6 +24,7 @@
 
 #include "IO_Expander.h"
 #include "DAC_MCP4726.h"
+#include "ADC_MCP3464.h"
 
 /* USER CODE END Includes */
 
@@ -51,9 +52,12 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-Expander_Handle_t MyExpander;
+ADC_Handle_t MyADC;
 DAC_Handle_t MyDAC;
+Expander_Handle_t MyExpander;
 
+
+float Voltage = 0;
 
 /* USER CODE END PV */
 
@@ -108,7 +112,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-
+  // Delay is required, because not all part of the system are powered-on when the code starts to execute the stuff
+  HAL_Delay(1000);
 
 
 //-------------------- IO Expander Initialization ----------------------------------//
@@ -120,7 +125,7 @@ int main(void)
 	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
 	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
 	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_RESET);
+	Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_RESET);
 //----------------------------------------------------------------------------------//
 
 
@@ -130,7 +135,7 @@ int main(void)
 	MyDAC.Command = WRITE_VOLATILE_MEMORY << 5;
 	MyDAC.Command += VREF_BUFFERED << 3;
 	MyDAC.Command += NO_POWERED_DOWN << 1;
-	MyDAC.Command += GAIN_1 << 0;
+	MyDAC.Command += ADC_GAIN_1 << 0;
 	MyDAC.DACValue = 0x0080;    // 0x80 - 1.5V
 
 
@@ -144,7 +149,51 @@ int main(void)
 		Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_SET);
 	}
 
+//---------------------------------------------------------------------------------//
 
+
+
+//-------------------------- ADC Initialization -----------------------------------//
+	// ADC Configuration:
+	MyADC.Config0.ADCMode = ADC_STANDBY_MODE;
+	MyADC.Config0.CS_SEL = NO_CURRENT_SOURCE;
+	MyADC.Config0.CLK_SEL = EXTERNAL_DIGITAL_CLOCK;
+
+	MyADC.Config1.RESERVED = 0x0;
+	MyADC.Config1.OSR = OSR_256;
+	//MyADC.Config1.PRE = AMCLK_MCLK_DIV0;
+	MyADC.Config1.PRE = AMCLK_MCLK_DIV8;
+
+	MyADC.Config2.RESERVED = 0x3;
+	MyADC.Config2.AZ_MUX = AZ_MUX_DISABLED;
+	MyADC.Config2.GAIN = ADC_GAIN_1;
+	MyADC.Config2.BOOST = BOOST_CURRENT_1;
+
+	MyADC.Config3.EN_GAINCAL = GAINCAL_DISABLED;
+	MyADC.Config3.EN_OFFCAL = OFFCAL_DISABLED;
+	MyADC.Config3.EN_CRCCOM = CRCCOM_DISABLED;
+	MyADC.Config3.CRC_FORMAT = CRC_FORMAT_CRC16;
+	MyADC.Config3.DATA_FORMAT = ADC_DATA_FORMAT_17BIT_RIGHT;
+	MyADC.Config3.CONV_MODE = CONV_MODE_ONE_SHOT_STANDBY;
+
+	MyADC.IRQ.EN_STP = CONVERSATION_START_INTERRUPT_DISABLED;
+	MyADC.IRQ.EN_FASTCMD = FAST_COMMAND_ENABLED;
+	MyADC.IRQ.IRQ_MODE0 = IRQ_PIN_MODE_LOGIC_HIGH;
+	MyADC.IRQ.IRQ_MODE1 = MDAT_PIN_MODE_ALL_SELECTED;
+
+	MyADC.MUX.MUX_VinPlus = MUX_CH0;
+	//MyADC.MUX.MUX_VinPlus = MUX_AGND;
+	//MyADC.MUX.MUX_VinMinus = MUX_AGND;
+	MyADC.MUX.MUX_VinMinus = MUX_CH1;
+	MyADC.LOCK = 0xA5;
+
+
+
+	ADC_Full_Reset(&MyADC);
+
+	// Put our configuration
+	ADC_Init(&MyADC);
+//----------------------------------------------------------------------------------//
 
   /* USER CODE END 2 */
 
@@ -152,32 +201,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
+	  HAL_Delay(500);
+	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
+	  HAL_Delay(500);
+
     /* USER CODE END WHILE */
-/*
-	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
-	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_RESET);
-	HAL_Delay(500);
 
-	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_SET);
-	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_RESET);
-	HAL_Delay(500);
-
-	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_SET);
-	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_RESET);
-	HAL_Delay(500);
-
-	Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_RESET);
-	Expander_Write_Single_Bit(&MyExpander, LED_YELLOW, PIN_SET);
-	HAL_Delay(500);
-*/
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -296,10 +327,10 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_INPUT;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -374,6 +405,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FAN_3_EN_GPIO_Port, FAN_3_EN_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ADC_nCS_GPIO_Port, ADC_nCS_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pins : FAN_1_EN_Pin FAN_2_EN_Pin */
   GPIO_InitStruct.Pin = FAN_1_EN_Pin|FAN_2_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -383,8 +417,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : IOEXPANDER_INT_L_Pin */
   GPIO_InitStruct.Pin = IOEXPANDER_INT_L_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(IOEXPANDER_INT_L_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : FAN_3_EN_Pin */
@@ -394,17 +428,64 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(FAN_3_EN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : ADS_IRQ_Pin */
-  GPIO_InitStruct.Pin = ADS_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(ADS_IRQ_GPIO_Port, &GPIO_InitStruct);
+  /*Configure GPIO pin : ADC_nCS_Pin */
+  GPIO_InitStruct.Pin = ADC_nCS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(ADC_nCS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ADC_IRQ_Pin */
+  GPIO_InitStruct.Pin = ADC_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(ADC_IRQ_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+
+	if (GPIO_Pin == IOEXPANDER_INT_L_Pin)
+	{
+		//Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_SET);
+		ADC_Start_Conversion(&MyADC);
+	}
+	else if (GPIO_Pin == ADC_IRQ_Pin)
+	{
+		Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_SET);
+		ADC_Get_Measured_DATA(&MyADC);
+		ADC_Proccess_Data();
+	}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* USER CODE END 4 */
 

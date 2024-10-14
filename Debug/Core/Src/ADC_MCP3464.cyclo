@@ -1,0 +1,14 @@
+../Core/Src/ADC_MCP3464.c:80:9:ADC_Incremental_Write	18
+../Core/Src/ADC_MCP3464.c:36:9:ADC_Init	1
+../Core/Src/ADC_MCP3464.c:355:10:ADC_Static_Read	1
+../Core/Src/ADC_MCP3464.c:398:6:ADC_Start_Conversion	1
+../Core/Src/ADC_MCP3464.c:426:6:ADC_Standby	1
+../Core/Src/ADC_MCP3464.c:451:6:ADC_Shutdown	1
+../Core/Src/ADC_MCP3464.c:476:6:ADC_Full_Shutdown	1
+../Core/Src/ADC_MCP3464.c:501:6:ADC_Full_Reset	1
+../Core/Src/ADC_MCP3464.c:526:9:ADC_Get_Status_Byte	1
+../Core/Src/ADC_MCP3464.c:558:9:ADC_Check_Errors	1
+../Core/Src/ADC_MCP3464.c:588:7:ADC_Get_Measured_DATA	1
+../Core/Src/ADC_MCP3464.c:610:6:Start_SPI_Transmit	1
+../Core/Src/ADC_MCP3464.c:615:6:Start_SPI_TransmitReceive	1
+../Core/Src/ADC_MCP3464.c:620:6:ADC_Proccess_Data	2
