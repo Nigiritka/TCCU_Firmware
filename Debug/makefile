@@ -61,7 +61,7 @@ main-build: Thermal_Chamber.elf secondary-outputs
 
 # Tool invocations
 Thermal_Chamber.elf Thermal_Chamber.map: $(OBJS) $(USER_OBJS) C:\Users\nigir\OneDrive\PROJECTS\PERSONAL\Thermal\ Chamber\TCCU_Firmware\STM32F030F4PX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Thermal_Chamber.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\nigir\OneDrive\PROJECTS\PERSONAL\Thermal Chamber\TCCU_Firmware\STM32F030F4PX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Thermal_Chamber.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -gdwarf-4 -o "Thermal_Chamber.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"C:\Users\nigir\OneDrive\PROJECTS\PERSONAL\Thermal Chamber\TCCU_Firmware\STM32F030F4PX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Thermal_Chamber.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

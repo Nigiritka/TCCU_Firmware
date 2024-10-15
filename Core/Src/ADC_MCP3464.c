@@ -601,8 +601,10 @@ float ADC_Get_Measured_DATA(ADC_Handle_t *pADC)
 	// Initiate SPI reading
 
 	HAL_GPIO_WritePin(ADC_nCS_GPIO_Port, ADC_nCS_Pin, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&SPI, SPIMessage, ADCReceivedData, 3, 10);
+	HAL_SPI_TransmitReceive(&SPI, &FastCommandByte, ADCReceivedData, 3, 10);
 	HAL_GPIO_WritePin(ADC_nCS_GPIO_Port, ADC_nCS_Pin, GPIO_PIN_SET);
+
+	ADC_Proccess_Data();
 	return 0;
 }
 

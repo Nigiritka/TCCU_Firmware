@@ -160,9 +160,9 @@ int main(void)
 	MyADC.Config0.CLK_SEL = EXTERNAL_DIGITAL_CLOCK;
 
 	MyADC.Config1.RESERVED = 0x0;
-	MyADC.Config1.OSR = OSR_256;
-	//MyADC.Config1.PRE = AMCLK_MCLK_DIV0;
-	MyADC.Config1.PRE = AMCLK_MCLK_DIV8;
+	MyADC.Config1.OSR = OSR_98304;
+	MyADC.Config1.PRE = AMCLK_MCLK_DIV4;
+	//MyADC.Config1.PRE = AMCLK_MCLK_DIV8;
 
 	MyADC.Config2.RESERVED = 0x3;
 	MyADC.Config2.AZ_MUX = AZ_MUX_DISABLED;
@@ -173,7 +173,7 @@ int main(void)
 	MyADC.Config3.EN_OFFCAL = OFFCAL_DISABLED;
 	MyADC.Config3.EN_CRCCOM = CRCCOM_DISABLED;
 	MyADC.Config3.CRC_FORMAT = CRC_FORMAT_CRC16;
-	MyADC.Config3.DATA_FORMAT = ADC_DATA_FORMAT_17BIT_RIGHT;
+	MyADC.Config3.DATA_FORMAT = ADC_DATA_FORMAT_16BIT;
 	MyADC.Config3.CONV_MODE = CONV_MODE_ONE_SHOT_STANDBY;
 
 	MyADC.IRQ.EN_STP = CONVERSATION_START_INTERRUPT_DISABLED;
@@ -202,10 +202,15 @@ int main(void)
   while (1)
   {
 
+	  ADC_Start_Conversion(&MyADC);
+	  HAL_Delay(300);
+
+	  /*
 	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
 	  HAL_Delay(500);
 	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
 	  HAL_Delay(500);
+	  */
 
     /* USER CODE END WHILE */
 
@@ -331,7 +336,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

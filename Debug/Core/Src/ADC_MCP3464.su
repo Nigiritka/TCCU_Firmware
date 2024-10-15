@@ -8,7 +8,5 @@
 ../Core/Src/ADC_MCP3464.c:501:6:ADC_Full_Reset	16	static
 ../Core/Src/ADC_MCP3464.c:526:9:ADC_Get_Status_Byte	32	static
 ../Core/Src/ADC_MCP3464.c:558:9:ADC_Check_Errors	0	static
-../Core/Src/ADC_MCP3464.c:588:7:ADC_Get_Measured_DATA	16	static
-../Core/Src/ADC_MCP3464.c:610:6:Start_SPI_Transmit	0	static
-../Core/Src/ADC_MCP3464.c:615:6:Start_SPI_TransmitReceive	0	static
-../Core/Src/ADC_MCP3464.c:620:6:ADC_Proccess_Data	8	static
+../Core/Src/ADC_MCP3464.c:614:6:ADC_Proccess_Data	8	static
+../Core/Src/ADC_MCP3464.c:588:7:ADC_Get_Measured_DATA	24	static
