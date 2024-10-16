@@ -16,7 +16,7 @@ uint8_t SPIMessage[26] = {0};
 // Adding Device address to the bits [7:6];
 uint8_t FastCommandByte = 0;
 
-uint8_t ADCReceivedData[30] = {0};
+static uint8_t ADCReceivedData[30] = {0};
 
 // transfer data to one variable
 int16_t ReadData;
@@ -122,7 +122,7 @@ uint8_t ADC_Incremental_Write(ADC_Handle_t *pADC, uint8_t RegisterAddress, uint8
 	 * Switch will decide amount of bytes for each particular register
 	 */
 
-	for (uint8_t CurrentRegister = RegisterAddress; CurrentRegister <= AmountADCRegistersToWrite; CurrentRegister++)
+	for (uint8_t CurrentRegister = RegisterAddress; CurrentRegister < (RegisterAddress + AmountADCRegistersToWrite); CurrentRegister++)
 	{
 		switch (CurrentRegister)
 		{

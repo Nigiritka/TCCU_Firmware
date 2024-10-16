@@ -56,8 +56,24 @@ ADC_Handle_t MyADC;
 DAC_Handle_t MyDAC;
 Expander_Handle_t MyExpander;
 
-
 float Voltage = 0;
+float VoltageCh1 = 0;
+float VoltageCh2 = 0;
+float VoltageCh3 = 0;
+float VoltageCh4 = 0;
+
+const float ResistanceCh1 = 1000;			// I will remove it, it is bullshit
+
+float ResistanceCh2 = 0;
+float ResistanceCh3 = 0;
+float ResistanceCh4 = 0;
+
+
+float A = 3.9083E-3;
+float B = -5.775E-7;
+float T;
+
+float Temperature;
 
 /* USER CODE END PV */
 
@@ -160,8 +176,8 @@ int main(void)
 	MyADC.Config0.CLK_SEL = EXTERNAL_DIGITAL_CLOCK;
 
 	MyADC.Config1.RESERVED = 0x0;
-	MyADC.Config1.OSR = OSR_98304;
-	MyADC.Config1.PRE = AMCLK_MCLK_DIV4;
+	MyADC.Config1.OSR = OSR_20480;
+	MyADC.Config1.PRE = AMCLK_MCLK_DIV2;
 	//MyADC.Config1.PRE = AMCLK_MCLK_DIV8;
 
 	MyADC.Config2.RESERVED = 0x3;
@@ -202,8 +218,42 @@ int main(void)
   while (1)
   {
 
+	  MyADC.MUX.MUX_VinPlus = MUX_CH0;
+	  MyADC.MUX.MUX_VinMinus = MUX_CH1;
+	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 	  ADC_Start_Conversion(&MyADC);
-	  HAL_Delay(300);
+	  HAL_Delay(100);
+	  VoltageCh1 = Voltage;
+
+
+	  MyADC.MUX.MUX_VinPlus = MUX_CH1;
+	  MyADC.MUX.MUX_VinMinus = MUX_CH2;
+	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+	  ADC_Start_Conversion(&MyADC);
+	  HAL_Delay(100);
+	  VoltageCh2 = Voltage;
+	  // Calculating the resistance
+	  ResistanceCh2 = ResistanceCh1*VoltageCh2/VoltageCh1;
+
+	  	  // simplified formula for conversion resistance into the temperature:
+		  Temperature = (ResistanceCh2 - ResistanceCh1) / (ResistanceCh1 * A);
+
+	  MyADC.MUX.MUX_VinPlus = MUX_CH2;
+	  MyADC.MUX.MUX_VinMinus = MUX_CH3;
+	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+	  ADC_Start_Conversion(&MyADC);
+	  HAL_Delay(100);
+	  VoltageCh3 = Voltage;
+	  ResistanceCh3 = ResistanceCh1*VoltageCh3/VoltageCh1;
+
+	  MyADC.MUX.MUX_VinPlus = MUX_CH3;
+	  MyADC.MUX.MUX_VinMinus = MUX_AGND;
+	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+	  ADC_Start_Conversion(&MyADC);
+	  HAL_Delay(100);
+	  VoltageCh4 = Voltage;
+	  ResistanceCh4 = ResistanceCh1*VoltageCh4/VoltageCh1;
+
 
 	  /*
 	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
@@ -475,7 +525,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 }
-
 
 
 
