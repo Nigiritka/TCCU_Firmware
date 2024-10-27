@@ -80,6 +80,7 @@ ADC_Handle_t MyADC;
 DAC_Handle_t MyDAC;
 Expander_Handle_t MyExpander;
 
+int flag = 0;
 
 typedef enum
 {
@@ -371,6 +372,42 @@ int main(void)
 		ssd1306_UpdateScreen();
 
 
+//----------------------- Operation indication----------------//
+		if (TCCU_Mode == Heating)
+		{
+			if (flag == 0)
+			{
+				ssd1306_SetCursor(0,0);
+				ssd1306_WriteString("TCCU: ON Heating", Font_7x10, White);
+				flag = 1;
+			}
+			else
+			{
+				ssd1306_SetCursor(0,0);
+				ssd1306_WriteString("TCCU: ON        ", Font_7x10, White);
+				flag = 0;
+			}
+			ssd1306_UpdateScreen();
+		}
+		else if (TCCU_Mode == Cooling)
+		{
+			if (flag == 0)
+			{
+				ssd1306_SetCursor(0,0);
+				ssd1306_WriteString("TCCU: ON Cooling", Font_7x10, White);
+				flag = 1;
+			}
+			else
+			{
+				ssd1306_SetCursor(0,0);
+				ssd1306_WriteString("TCCU: ON        ", Font_7x10, White);
+				flag = 0;
+			}
+			ssd1306_UpdateScreen();
+		}
+//-------------------------------------------------------------------------------//
+
+
 
 	  /*
 	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_SET);
@@ -600,7 +637,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		if (Expander_Read_Byte(&MyExpander) & (1<<BUTTON_INCREASE))
 		{
-			if (SetPoint <85)
+			if (SetPoint <85 && TCCU_Mode == StandBy)
 			{
 				SetPoint += 5;
 
@@ -613,7 +650,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		}
 		else if (Expander_Read_Byte(&MyExpander) & (1<<BUTTON_DECREASE))
 		{
-			if (SetPoint > -40)
+			if (SetPoint > -40 && TCCU_Mode == StandBy)
 			{
 				SetPoint -= 5;
 			}
@@ -632,21 +669,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				{
 					TCCU_Mode = Heating;
 					ssd1306_SetCursor(0,0);
-					ssd1306_WriteString("TCCU: ON - Heating", Font_7x10, White);
+					ssd1306_WriteString("TCCU: ON Heating", Font_7x10, White);
 					ssd1306_UpdateScreen();
 				}
 				else
 				{
 					TCCU_Mode = Cooling;
 					ssd1306_SetCursor(0,0);
-					ssd1306_WriteString("TCCU: ON - Cooling", Font_7x10, White);
+					ssd1306_WriteString("TCCU: ON Cooling", Font_7x10, White);
 					ssd1306_UpdateScreen();
 				}
 			}
 			else
 			{
 				TCCU_Mode = StandBy;
-				TCCU_Mode = Cooling;
 				ssd1306_SetCursor(0,0);
 				ssd1306_WriteString("TCCU: StandBy     ", Font_7x10, White);
 				ssd1306_UpdateScreen();
@@ -676,38 +712,56 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void intToStr(int N, char *str) {
     int i = 0;
 
-    // Save the copy of the number for sign
-    int sign = N;
-
-    // If the number is negative, make it positive
-    if (N < 0)
-        N = -N;
-
-    // Extract digits from the number and add them to the
-    // string
-    while (N > 0) {
-
-        // Convert integer digit to character and store
-      	// it in the str
-        str[i++] = N % 10 + '0';
-      	N /= 10;
+    if (N == 0)
+    {
+    	str[i++] = '0';
+    	str[i++] = ' ';
+    	str[i++] = ' ';
     }
+    else
+    {
 
-    // If the number was negative, add a minus sign to the
-    // string
-    if (sign < 0) {
-        str[i++] = '-';
+		// Save the copy of the number for sign
+		int sign = N;
+
+		// If the number is negative, make it positive
+		if (N < 0)
+			N = -N;
+
+		// Extract digits from the number and add them to the
+		// string
+		while (N > 0) {
+
+			// Convert integer digit to character and store
+			// it in the str
+			str[i++] = N % 10 + '0';
+			N /= 10;
+		}
+
+		// If the number was negative, add a minus sign to the
+		// string
+		if (sign < 0) {
+			str[i++] = '-';
+		}
+		else
+		{
+			str[i++] = '+';
+		}
+		// Null-terminate the string
+		if (i<3)
+		{
+			str[i++] = ' ';
+		}
+		str[i] = '\0';
     }
+	// Reverse the string to get the correct order
+	for (int j = 0, k = i - 1; j < k; j++, k--) {
+		char temp = str[j];
+		str[j] = str[k];
+		str[k] = temp;
+	}
 
-    // Null-terminate the string
-    str[i] = '\0';
 
-    // Reverse the string to get the correct order
-    for (int j = 0, k = i - 1; j < k; j++, k--) {
-        char temp = str[j];
-        str[j] = str[k];
-        str[k] = temp;
-    }
 }
 
 
