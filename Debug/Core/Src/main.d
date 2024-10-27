@@ -26,10 +26,20 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi_ex.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_crs.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_rcc.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_bus.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_system.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_exti.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_cortex.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_utils.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_pwr.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_dma.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_gpio.h \
  ../Core/Inc/IO_Expander.h ../Core/Inc/main.h ../Core/Inc/DAC_MCP4726.h \
- ../Core/Inc/ADC_MCP3464.h
+ ../Core/Inc/ADC_MCP3464.h ../Core/Inc/SSD1306.h \
+ ../Core/Inc/ssd1306_conf.h ../Core/Inc/SSD1306_fonts.h \
+ ../Core/Inc/ssd1306.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
 ../Core/Inc/stm32f0xx_hal_conf.h:
@@ -58,9 +68,21 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi_ex.h:
-../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h:
-../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_crs.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_rcc.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_bus.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_system.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_exti.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_cortex.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_utils.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_pwr.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_dma.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_ll_gpio.h:
 ../Core/Inc/IO_Expander.h:
 ../Core/Inc/main.h:
 ../Core/Inc/DAC_MCP4726.h:
 ../Core/Inc/ADC_MCP3464.h:
+../Core/Inc/SSD1306.h:
+../Core/Inc/ssd1306_conf.h:
+../Core/Inc/SSD1306_fonts.h:
+../Core/Inc/ssd1306.h:

@@ -15,6 +15,28 @@
   *
   ******************************************************************************
   */
+
+
+
+/*
+ * TO DO:
+ * 1. Figure out with display
+ * 2. Humidity Sensor
+ * 2.1. Temperature sensor
+ * 3. Button control
+ * 4. Rotate Fan
+ * 5. Changed GPIO from HAL to LL
+ * 6. Add + to positive temperature
+ * 7. 0 degree is not printed..
+ *
+ *
+ *
+ */
+
+
+
+
+
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -25,6 +47,10 @@
 #include "IO_Expander.h"
 #include "DAC_MCP4726.h"
 #include "ADC_MCP3464.h"
+
+#include "SSD1306.h"
+#include "SSD1306_fonts.h"
+
 
 /* USER CODE END Includes */
 
@@ -48,13 +74,22 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi1;
 
-UART_HandleTypeDef huart1;
-
 /* USER CODE BEGIN PV */
 
 ADC_Handle_t MyADC;
 DAC_Handle_t MyDAC;
 Expander_Handle_t MyExpander;
+
+
+typedef enum
+{
+	StandBy = 0U,
+	Heating,
+	Cooling
+} Mode_of_Operation;
+
+Mode_of_Operation TCCU_Mode = StandBy;
+
 
 float Voltage = 0;
 float VoltageCh1 = 0;
@@ -68,12 +103,19 @@ float ResistanceCh2 = 0;
 float ResistanceCh3 = 0;
 float ResistanceCh4 = 0;
 
+float ResistanceADCOffset = 0;
 
 float A = 3.9083E-3;
-float B = -5.775E-7;
-float T;
+char TempString[4];
 
-float Temperature;
+
+int SetPoint = 10;
+
+
+//it was float, but for easines of manipulation with the number, int is fine, I do not need more precision than +/- 1 degree C
+int TemperatureCh2;
+int TemperatureCh3;
+int TemperatureCh4;
 
 /* USER CODE END PV */
 
@@ -82,7 +124,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -125,7 +166,6 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
-  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   // Delay is required, because not all part of the system are powered-on when the code starts to execute the stuff
@@ -145,7 +185,9 @@ int main(void)
 //----------------------------------------------------------------------------------//
 
 
-//-------------------- DAC Initialization ----------------------------------//
+
+
+//---------------------------- DAC Initialization ----------------------------------//
 
 	MyDAC.DACAddress = 0x63;
 	MyDAC.Command = WRITE_VOLATILE_MEMORY << 5;
@@ -154,9 +196,13 @@ int main(void)
 	MyDAC.Command += ADC_GAIN_1 << 0;
 	MyDAC.DACValue = 0x0080;    // 0x80 - 1.5V
 
+//----------------------------------------------------------------------------------//
 
 
-	if (HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10) == HAL_OK)
+/*
+
+//------------------------ I2C Device Checker --------------------------------------//
+	if (HAL_I2C_IsDeviceReady(&I2C, 0x3C<<1, 3, 10) == HAL_OK)
 	{
 		Expander_Write_Single_Bit(&MyExpander, LED_WHITE, PIN_SET);
 	}
@@ -164,21 +210,32 @@ int main(void)
 	{
 		Expander_Write_Single_Bit(&MyExpander, LED_RED, PIN_SET);
 	}
+//----------------------------------------------------------------------------------//
+*/
 
-//---------------------------------------------------------------------------------//
+		ssd1306_Init();
+		ssd1306_Fill(Black);
+		ssd1306_UpdateScreen();
+
+		ssd1306_WriteString("TCCU: StandBy", Font_7x10, White);
+		ssd1306_UpdateScreen();
+		HAL_Delay(1000);
+		ssd1306_SetCursor(0,20);
+		ssd1306_WriteString("Set Point:", Font_7x10, White);
+		ssd1306_UpdateScreen();
 
 
 
-//-------------------------- ADC Initialization -----------------------------------//
+
+//-------------------------- ADC Initialization ------------------------------------//
 	// ADC Configuration:
 	MyADC.Config0.ADCMode = ADC_STANDBY_MODE;
 	MyADC.Config0.CS_SEL = NO_CURRENT_SOURCE;
 	MyADC.Config0.CLK_SEL = EXTERNAL_DIGITAL_CLOCK;
 
 	MyADC.Config1.RESERVED = 0x0;
-	MyADC.Config1.OSR = OSR_20480;
+	MyADC.Config1.OSR = OSR_4096;
 	MyADC.Config1.PRE = AMCLK_MCLK_DIV2;
-	//MyADC.Config1.PRE = AMCLK_MCLK_DIV8;
 
 	MyADC.Config2.RESERVED = 0x3;
 	MyADC.Config2.AZ_MUX = AZ_MUX_DISABLED;
@@ -198,18 +255,20 @@ int main(void)
 	MyADC.IRQ.IRQ_MODE1 = MDAT_PIN_MODE_ALL_SELECTED;
 
 	MyADC.MUX.MUX_VinPlus = MUX_CH0;
-	//MyADC.MUX.MUX_VinPlus = MUX_AGND;
-	//MyADC.MUX.MUX_VinMinus = MUX_AGND;
 	MyADC.MUX.MUX_VinMinus = MUX_CH1;
 	MyADC.LOCK = 0xA5;
-
 
 
 	ADC_Full_Reset(&MyADC);
 
 	// Put our configuration
 	ADC_Init(&MyADC);
-//----------------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------------//
+
+
+	//HAL_GPIO_WritePin(FAN_3_EN_GPIO_Port, FAN_3_EN_Pin, GPIO_PIN_SET);
+	//LL_GPIO_SetOutputPin(FAN_3_EN_GPIO_Port, FAN_3_EN_Pin);
+
 
   /* USER CODE END 2 */
 
@@ -218,41 +277,99 @@ int main(void)
   while (1)
   {
 
-	  MyADC.MUX.MUX_VinPlus = MUX_CH0;
-	  MyADC.MUX.MUX_VinMinus = MUX_CH1;
-	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
-	  ADC_Start_Conversion(&MyADC);
-	  HAL_Delay(100);
-	  VoltageCh1 = Voltage;
 
 
-	  MyADC.MUX.MUX_VinPlus = MUX_CH1;
-	  MyADC.MUX.MUX_VinMinus = MUX_CH2;
-	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
-	  ADC_Start_Conversion(&MyADC);
-	  HAL_Delay(100);
-	  VoltageCh2 = Voltage;
-	  // Calculating the resistance
-	  ResistanceCh2 = ResistanceCh1*VoltageCh2/VoltageCh1;
+		MyADC.MUX.MUX_VinPlus = MUX_CH0;
+		MyADC.MUX.MUX_VinMinus = MUX_CH1;
+		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+		ADC_Start_Conversion(&MyADC);
+		HAL_Delay(100);
+		VoltageCh1 = Voltage;
 
-	  	  // simplified formula for conversion resistance into the temperature:
-		  Temperature = (ResistanceCh2 - ResistanceCh1) / (ResistanceCh1 * A);
 
-	  MyADC.MUX.MUX_VinPlus = MUX_CH2;
-	  MyADC.MUX.MUX_VinMinus = MUX_CH3;
-	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
-	  ADC_Start_Conversion(&MyADC);
-	  HAL_Delay(100);
-	  VoltageCh3 = Voltage;
-	  ResistanceCh3 = ResistanceCh1*VoltageCh3/VoltageCh1;
+		MyADC.MUX.MUX_VinPlus = MUX_CH1;
+		MyADC.MUX.MUX_VinMinus = MUX_CH2;
+		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+		ADC_Start_Conversion(&MyADC);
+		HAL_Delay(100);
+		VoltageCh2 = Voltage;
+		// Calculating the resistance
+		ResistanceCh2 = ResistanceCh1*VoltageCh2/VoltageCh1;
 
-	  MyADC.MUX.MUX_VinPlus = MUX_CH3;
-	  MyADC.MUX.MUX_VinMinus = MUX_AGND;
-	  ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
-	  ADC_Start_Conversion(&MyADC);
-	  HAL_Delay(100);
-	  VoltageCh4 = Voltage;
-	  ResistanceCh4 = ResistanceCh1*VoltageCh4/VoltageCh1;
+
+		  // simplified formula for conversion resistance into the temperature:
+		  TemperatureCh2 = (ResistanceCh2 - ResistanceCh1) / (ResistanceCh1 * A);
+
+		MyADC.MUX.MUX_VinPlus = MUX_CH2;
+		MyADC.MUX.MUX_VinMinus = MUX_CH3;
+		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+		ADC_Start_Conversion(&MyADC);
+		HAL_Delay(100);
+		VoltageCh3 = Voltage;
+		ResistanceCh3 = ResistanceCh1*VoltageCh3/VoltageCh1;
+
+		  TemperatureCh3 = (ResistanceCh3 - ResistanceCh1) / (ResistanceCh1 * A);
+
+		MyADC.MUX.MUX_VinPlus = MUX_CH3;
+		MyADC.MUX.MUX_VinMinus = MUX_AGND;
+		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+		ADC_Start_Conversion(&MyADC);
+		HAL_Delay(100);
+		VoltageCh4 = Voltage;
+		ResistanceCh4 = ResistanceCh1*VoltageCh4/VoltageCh1;
+
+		  TemperatureCh4 = (ResistanceCh4 - ResistanceCh1) / (ResistanceCh1 * A);
+
+
+		MyADC.MUX.MUX_VinPlus = MUX_CH3;
+		MyADC.MUX.MUX_VinMinus = MUX_CH3;
+		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
+		ADC_Start_Conversion(&MyADC);
+		HAL_Delay(100);
+		ResistanceADCOffset = ResistanceCh1*Voltage/VoltageCh1;
+
+
+
+//---------------------------Display-------------------------//
+		ssd1306_SetCursor(90,20);
+		ssd1306_WriteString("Temp:", Font_7x10, White);
+		ssd1306_Line(82,20,82,60, White);
+
+//------------------------ t Sensor 1 ----------------------//
+		ssd1306_SetCursor(115,34);
+		ssd1306_WriteString("C", Font_7x10, White);
+		ssd1306_SetCursor(90,34);
+		intToStr(TemperatureCh2,TempString);
+		ssd1306_WriteString(TempString, Font_7x10, White);
+//----------------------------------------------------------//
+
+//------------------------ t Sensor 2 ----------------------//
+		ssd1306_SetCursor(115,44);
+		ssd1306_WriteString("C", Font_7x10, White);
+		ssd1306_SetCursor(90,44);
+		intToStr(TemperatureCh3,TempString);
+		ssd1306_WriteString(TempString, Font_7x10, White);
+//----------------------------------------------------------//
+
+
+//------------------------ t Sensor 3 ----------------------//
+		ssd1306_SetCursor(115,54);
+		ssd1306_WriteString("C", Font_7x10, White);
+		ssd1306_SetCursor(90,54);
+		intToStr(TemperatureCh4,TempString);
+		ssd1306_WriteString(TempString, Font_7x10, White);
+//----------------------------------------------------------//
+
+//------------------------ Set Point ----------------------//
+		ssd1306_SetCursor(25,34);
+		ssd1306_WriteString("C", Font_7x10, White);
+		ssd1306_SetCursor(0,34);
+		intToStr(SetPoint,TempString);
+		ssd1306_WriteString(TempString, Font_7x10, White);
+//----------------------------------------------------------//
+
+		ssd1306_UpdateScreen();
+
 
 
 	  /*
@@ -261,6 +378,9 @@ int main(void)
 	  Expander_Write_Single_Bit(&MyExpander, LED_BLUE, PIN_RESET);
 	  HAL_Delay(500);
 	  */
+
+
+
 
     /* USER CODE END WHILE */
 
@@ -275,44 +395,43 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_1);
+  while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_1)
+  {
+  }
+  LL_RCC_HSI_Enable();
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
-  RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+   /* Wait till HSI is ready */
+  while(LL_RCC_HSI_IsReady() != 1)
+  {
+
+  }
+  LL_RCC_HSI_SetCalibTrimming(16);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI_DIV_2, LL_RCC_PLL_MUL_12);
+  LL_RCC_PLL_Enable();
+
+   /* Wait till PLL is ready */
+  while(LL_RCC_PLL_IsReady() != 1)
+  {
+
+  }
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+
+   /* Wait till System clock is ready */
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+  {
+
+  }
+  LL_SetSystemCoreClock(48000000);
+
+   /* Update the time base */
+  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
   {
     Error_Handler();
   }
-
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
-  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  LL_RCC_SetI2CClockSource(LL_RCC_I2C1_CLKSOURCE_HSI);
 }
 
 /**
@@ -331,7 +450,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x2000090E;
+  hi2c1.Init.Timing = 0x0000020B;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -400,41 +519,6 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
-
-}
-
-/**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART1_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART1_Init 0 */
-
-  /* USER CODE END USART1_Init 0 */
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 38400;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART1_Init 2 */
-
-  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -513,12 +597,70 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 	if (GPIO_Pin == IOEXPANDER_INT_L_Pin)
 	{
-		//Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_SET);
-		ADC_Start_Conversion(&MyADC);
+
+		if (Expander_Read_Byte(&MyExpander) & (1<<BUTTON_INCREASE))
+		{
+			if (SetPoint <85)
+			{
+				SetPoint += 5;
+
+			}
+
+			ssd1306_SetCursor(0,34);
+			intToStr(SetPoint,TempString);
+			ssd1306_WriteString(TempString, Font_7x10, White);
+			ssd1306_UpdateScreen();
+		}
+		else if (Expander_Read_Byte(&MyExpander) & (1<<BUTTON_DECREASE))
+		{
+			if (SetPoint > -40)
+			{
+				SetPoint -= 5;
+			}
+
+			ssd1306_SetCursor(0,34);
+			intToStr(SetPoint,TempString);
+			ssd1306_WriteString(TempString, Font_7x10, White);
+			ssd1306_UpdateScreen();
+		}
+		else if (Expander_Read_Byte(&MyExpander) & (1<<BUTTON_STARTSTOP))
+		{
+			if (TCCU_Mode == StandBy)
+			{
+				// if we are gonna heat
+				if (SetPoint > TemperatureCh2)
+				{
+					TCCU_Mode = Heating;
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("TCCU: ON - Heating", Font_7x10, White);
+					ssd1306_UpdateScreen();
+				}
+				else
+				{
+					TCCU_Mode = Cooling;
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("TCCU: ON - Cooling", Font_7x10, White);
+					ssd1306_UpdateScreen();
+				}
+			}
+			else
+			{
+				TCCU_Mode = StandBy;
+				TCCU_Mode = Cooling;
+				ssd1306_SetCursor(0,0);
+				ssd1306_WriteString("TCCU: StandBy     ", Font_7x10, White);
+				ssd1306_UpdateScreen();
+			}
+		}
+
+
+
+
+
 	}
 	else if (GPIO_Pin == ADC_IRQ_Pin)
 	{
-		Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_SET);
+		//Expander_Write_Single_Bit(&MyExpander, LED_AMBER, PIN_SET);
 		ADC_Get_Measured_DATA(&MyADC);
 		ADC_Proccess_Data();
 	}
@@ -531,6 +673,42 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 
+void intToStr(int N, char *str) {
+    int i = 0;
+
+    // Save the copy of the number for sign
+    int sign = N;
+
+    // If the number is negative, make it positive
+    if (N < 0)
+        N = -N;
+
+    // Extract digits from the number and add them to the
+    // string
+    while (N > 0) {
+
+        // Convert integer digit to character and store
+      	// it in the str
+        str[i++] = N % 10 + '0';
+      	N /= 10;
+    }
+
+    // If the number was negative, add a minus sign to the
+    // string
+    if (sign < 0) {
+        str[i++] = '-';
+    }
+
+    // Null-terminate the string
+    str[i] = '\0';
+
+    // Reverse the string to get the correct order
+    for (int j = 0, k = i - 1; j < k; j++, k--) {
+        char temp = str[j];
+        str[j] = str[k];
+        str[k] = temp;
+    }
+}
 
 
 
