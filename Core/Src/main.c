@@ -20,14 +20,19 @@
 
 /*
  * TO DO:
- * 1. Figure out with display
- * 2. Humidity Sensor
- * 2.1. Temperature sensor
- * 3. Button control
- * 4. Rotate Fan
- * 5. Changed GPIO from HAL to LL
- * 6. Add + to positive temperature
- * 7. 0 degree is not printed..
+ * 0. EEPROM Value for DAC!!!!!!!!!!!!!!
+ *
+ *
+ * 1. Humidity Sensor
+ * 1.1. Temperature sensor
+ * 2. PID
+ * 3. FAN thresholds definition
+ *
+ *
+ *
+ *
+ *
+ * 6. Changed GPIO from HAL to LL
  *
  *
  *
@@ -72,6 +77,8 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+
+
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -112,6 +119,8 @@ char TempString[4];
 
 int SetPoint = 10;
 
+
+uint32_t delay = 100;
 
 //it was float, but for easines of manipulation with the number, int is fine, I do not need more precision than +/- 1 degree C
 int TemperatureCh2;
@@ -194,8 +203,10 @@ int main(void)
 	MyDAC.Command = WRITE_VOLATILE_MEMORY << 5;
 	MyDAC.Command += VREF_BUFFERED << 3;
 	MyDAC.Command += NO_POWERED_DOWN << 1;
-	MyDAC.Command += ADC_GAIN_1 << 0;
+	MyDAC.Command += DAC_GAIN_1 << 0;
 	MyDAC.DACValue = 0x0080;    // 0x80 - 1.5V
+	HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10);
+
 
 //----------------------------------------------------------------------------------//
 
@@ -284,7 +295,7 @@ int main(void)
 		MyADC.MUX.MUX_VinMinus = MUX_CH1;
 		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 		ADC_Start_Conversion(&MyADC);
-		HAL_Delay(100);
+		HAL_Delay(delay);
 		VoltageCh1 = Voltage;
 
 
@@ -292,7 +303,7 @@ int main(void)
 		MyADC.MUX.MUX_VinMinus = MUX_CH2;
 		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 		ADC_Start_Conversion(&MyADC);
-		HAL_Delay(100);
+		HAL_Delay(delay);
 		VoltageCh2 = Voltage;
 		// Calculating the resistance
 		ResistanceCh2 = ResistanceCh1*VoltageCh2/VoltageCh1;
@@ -305,7 +316,7 @@ int main(void)
 		MyADC.MUX.MUX_VinMinus = MUX_CH3;
 		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 		ADC_Start_Conversion(&MyADC);
-		HAL_Delay(100);
+		HAL_Delay(delay);
 		VoltageCh3 = Voltage;
 		ResistanceCh3 = ResistanceCh1*VoltageCh3/VoltageCh1;
 
@@ -315,7 +326,7 @@ int main(void)
 		MyADC.MUX.MUX_VinMinus = MUX_AGND;
 		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 		ADC_Start_Conversion(&MyADC);
-		HAL_Delay(100);
+		HAL_Delay(delay);
 		VoltageCh4 = Voltage;
 		ResistanceCh4 = ResistanceCh1*VoltageCh4/VoltageCh1;
 
@@ -326,7 +337,7 @@ int main(void)
 		MyADC.MUX.MUX_VinMinus = MUX_CH3;
 		ADC_Incremental_Write(&MyADC, MUX_ADDRESS, 1);
 		ADC_Start_Conversion(&MyADC);
-		HAL_Delay(100);
+		HAL_Delay(delay);
 		ResistanceADCOffset = ResistanceCh1*Voltage/VoltageCh1;
 
 
@@ -406,6 +417,32 @@ int main(void)
 			ssd1306_UpdateScreen();
 		}
 //-------------------------------------------------------------------------------//
+
+
+
+//----------------Thermal control loop-------------------------------------------//
+
+	if (TCCU_Mode == Heating)
+	{
+		MyDAC.DACValue = 0x00AA;    // 0xAA - 2.0V
+		HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10);
+	}
+	else if (TCCU_Mode == Cooling)
+	{
+		MyDAC.DACValue = 0x0055;    // 0x75 - 1.4V
+		HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10);
+	}
+	else
+	{
+		MyDAC.DACValue = 0x0080;    // 0x80 - 1.5V
+		HAL_I2C_Master_Transmit(&I2C, MyDAC.DACAddress<<1, &MyDAC.Command, 3, 10);
+	}
+
+	//-------------------------------------------------------------------------------//
+
+
+
+
 
 
 
